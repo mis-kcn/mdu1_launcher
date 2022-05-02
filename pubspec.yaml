@@ -8,6 +8,9 @@ dependencies:
   flutter:
     sdk: flutter
   device_apps: ^2.2.0
+  equatable: ^2.0.3
+  bloc: ^8.0.3
+  flutter_bloc: ^8.0.1
 
 dev_dependencies:
   flutter_lints: ^1.0.0
