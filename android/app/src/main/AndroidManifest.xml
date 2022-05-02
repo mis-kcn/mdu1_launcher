@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
    <application
-        android:label="mdu1_launcher"
+        android:label="MDU1 TV Launcher"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
