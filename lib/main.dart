@@ -122,8 +122,11 @@ class LauncherScreen extends StatelessWidget {
                               children: [
                                 app is ApplicationWithIcon
                                     ? Expanded(
-                                        child: Image.memory(
-                                          app.icon,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(32.0),
+                                          child: Image.memory(
+                                            app.icon,
+                                          ),
                                         ),
                                       )
                                     : const SizedBox.shrink(),
@@ -148,23 +151,6 @@ class LauncherScreen extends StatelessWidget {
                   );
                 },
               ),
-              // FutureBuilder(
-              //   future: DeviceApps.getInstalledApplications(
-              //     includeAppIcons: true,
-              //     includeSystemApps: true,
-              //     onlyAppsWithLaunchIntent: true,
-              //   ),
-              //   builder: (context, AsyncSnapshot<List<Application>> snapshot) {
-              //     if (snapshot.connectionState == ConnectionState.done &&
-              //         snapshot.data != null) {
-              //       return ;
-              //     }
-
-              //     return const Center(
-              //       child: CircularProgressIndicator(),
-              //     );
-              //   },
-              // ),
             ],
           ),
         ),
