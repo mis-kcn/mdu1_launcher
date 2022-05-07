@@ -1,7 +1,14 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:device_apps/device_apps.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'package:ota_update/ota_update.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'apps_cubit.dart';
 
@@ -28,8 +35,87 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class LauncherScreen extends StatelessWidget {
+class LauncherScreen extends StatefulWidget {
   const LauncherScreen({Key? key}) : super(key: key);
+
+  @override
+  State<LauncherScreen> createState() => _LauncherScreenState();
+}
+
+class _LauncherScreenState extends State<LauncherScreen>
+    with WidgetsBindingObserver {
+  DateTime? lastCheckExpiration;
+  AppLifecycleState? _notification;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance?.addObserver(this);
+
+    fetchOtaUpdate();
+  }
+
+  Future<void> fetchOtaUpdate() async {
+    try {
+      setState(() {
+        lastCheckExpiration = DateTime.now().add(const Duration(minutes: 1));
+      });
+      print('RUNNING OTA UPDATE... (last checked $lastCheckExpiration)');
+
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      final packageInfoPlugin = await PackageInfo.fromPlatform();
+      final androidVersion = await deviceInfoPlugin.androidInfo;
+
+      final resp = await http.post(
+        Uri.parse('https://smoggy-fifth-tub.glitch.me/apiv2/launcher/upgrade'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'api_version': androidVersion.version.sdkInt.toString(),
+          'app_version': packageInfoPlugin.version,
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        return;
+      }
+
+      OtaUpdate().execute(
+        resp.body,
+      );
+    } catch (e, st) {
+      log(
+        e.toString(),
+        error: st,
+      );
+      // await SmartDialog.showToast(
+      //   'There was a problem fetching new updates.',
+      //   time: const Duration(seconds: 5),
+      // );
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance?.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(lastCheckExpiration);
+    if (_notification?.name == 'paused' &&
+        state.name == 'resumed' &&
+        DateTime.now().isAfter(lastCheckExpiration!)) {
+      fetchOtaUpdate();
+    }
+
+    setState(() {
+      _notification = state;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

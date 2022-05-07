@@ -11,6 +11,10 @@ dependencies:
   equatable: ^2.0.3
   bloc: ^8.0.3
   flutter_bloc: ^8.0.1
+  ota_update: ^4.0.1
+  http: ^0.13.4
+  device_info_plus: ^3.2.3
+  package_info_plus: ^1.4.2
 
 dev_dependencies:
   flutter_lints: ^1.0.0
