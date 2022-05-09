@@ -66,7 +66,6 @@ class _LauncherScreenState extends State<LauncherScreen>
       setState(() {
         lastCheckExpiration = DateTime.now().add(const Duration(minutes: 1));
       });
-      print('RUNNING OTA UPDATE... (last checked $lastCheckExpiration)');
 
       final deviceInfoPlugin = DeviceInfoPlugin();
       final packageInfoPlugin = await PackageInfo.fromPlatform();
@@ -111,7 +110,6 @@ class _LauncherScreenState extends State<LauncherScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print(lastCheckExpiration);
     if (_notification?.name == 'paused' &&
         state.name == 'resumed' &&
         DateTime.now().isAfter(lastCheckExpiration!)) {
@@ -184,7 +182,6 @@ class _LauncherScreenState extends State<LauncherScreen>
               ),
               BlocConsumer<AppsCubit, AppsState>(
                 listener: (context, state) {
-                  print('scrolling');
                   controller.scrollToIndex(
                     state.selectedIndex ?? 0,
                     preferPosition: AutoScrollPosition.middle,
