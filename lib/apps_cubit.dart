@@ -25,7 +25,7 @@ class AppsCubit extends Cubit<AppsState> {
   }
 
   void handleKeyUp() {
-    var newIndex = (state.selectedIndex ?? 0) - 6;
+    var newIndex = (state.selectedIndex ?? 0) - 5;
 
     if (newIndex < 0) newIndex = 0;
 
@@ -35,7 +35,7 @@ class AppsCubit extends Cubit<AppsState> {
   void handleKeyDown() {
     if (state.applications == null) return;
 
-    var newIndex = (state.selectedIndex ?? 0) + 6;
+    var newIndex = (state.selectedIndex ?? 0) + 5;
 
     if (newIndex > (state.applications!.length - 1)) {
       newIndex = state.applications!.length - 1;

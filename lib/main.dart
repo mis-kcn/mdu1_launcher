@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 import 'apps_cubit.dart';
 
@@ -46,12 +47,17 @@ class _LauncherScreenState extends State<LauncherScreen>
     with WidgetsBindingObserver {
   DateTime? lastCheckExpiration;
   AppLifecycleState? _notification;
+  late AutoScrollController controller;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance?.addObserver(this);
-
+    controller = AutoScrollController(
+      viewportBoundaryGetter: () =>
+          Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
+      axis: Axis.vertical,
+    );
     fetchOtaUpdate();
   }
 
@@ -176,59 +182,78 @@ class _LauncherScreenState extends State<LauncherScreen>
                   ),
                 ),
               ),
-              BlocBuilder<AppsCubit, AppsState>(
+              BlocConsumer<AppsCubit, AppsState>(
+                listener: (context, state) {
+                  print('scrolling');
+                  controller.scrollToIndex(
+                    state.selectedIndex ?? 0,
+                    preferPosition: AutoScrollPosition.middle,
+                    duration: const Duration(milliseconds: 1),
+                  );
+                },
                 builder: (context, state) {
                   if (state.applications != null) {
-                    return GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 5,
-                      ),
-                      itemCount: state.applications!.length,
-                      itemBuilder: (context, index) {
-                        final app = state.applications![index];
-                        return GestureDetector(
-                          onTap: () {
-                            DeviceApps.openApp(app.packageName);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: index == state.selectedIndex
-                                  ? Colors.black.withOpacity(0.85)
-                                  : null,
-                              borderRadius: BorderRadius.circular(16),
-                              border: index == state.selectedIndex
-                                  ? Border.all(color: Colors.white, width: 1)
-                                  : null,
-                            ),
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                app is ApplicationWithIcon
-                                    ? Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(32.0),
-                                          child: Image.memory(
-                                            app.icon,
-                                          ),
-                                        ),
-                                      )
-                                    : const SizedBox.shrink(),
-                                Text(
-                                  app.appName,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                    return Padding(
+                      padding: const EdgeInsets.all(64.0),
+                      child: GridView.builder(
+                        controller: controller,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 5,
+                        ),
+                        itemCount: state.applications!.length,
+                        itemBuilder: (context, index) {
+                          final app = state.applications![index];
+                          return GestureDetector(
+                            onTap: () {
+                              DeviceApps.openApp(app.packageName);
+                            },
+                            child: AutoScrollTag(
+                              key: ValueKey(index),
+                              controller: controller,
+                              index: index,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: index == state.selectedIndex
+                                      ? Colors.black.withOpacity(0.85)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: index == state.selectedIndex
+                                      ? Border.all(
+                                          color: Colors.white, width: 1)
+                                      : null,
                                 ),
-                              ],
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    app is ApplicationWithIcon
+                                        ? Expanded(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(40.0),
+                                              child: Image.memory(
+                                                app.icon,
+                                              ),
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                    Text(
+                                      app.appName,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     );
                   }
 
