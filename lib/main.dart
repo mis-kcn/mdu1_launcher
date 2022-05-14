@@ -59,6 +59,7 @@ class _LauncherScreenState extends State<LauncherScreen>
       axis: Axis.vertical,
     );
     fetchOtaUpdate();
+    DeviceApps.openApp('tv.mdu1.iptv');
   }
 
   Future<void> fetchOtaUpdate() async {
@@ -191,12 +192,12 @@ class _LauncherScreenState extends State<LauncherScreen>
                 builder: (context, state) {
                   if (state.applications != null) {
                     return Padding(
-                      padding: const EdgeInsets.all(64.0),
+                      padding: const EdgeInsets.all(48.0),
                       child: GridView.builder(
                         controller: controller,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
+                          crossAxisCount: 7,
                         ),
                         itemCount: state.applications!.length,
                         itemBuilder: (context, index) {
@@ -229,7 +230,7 @@ class _LauncherScreenState extends State<LauncherScreen>
                                         ? Expanded(
                                             child: Padding(
                                               padding:
-                                                  const EdgeInsets.all(40.0),
+                                                  const EdgeInsets.all(6.0),
                                               child: Image.memory(
                                                 app.icon,
                                               ),

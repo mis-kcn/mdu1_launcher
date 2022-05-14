@@ -11,10 +11,6 @@ class AppsCubit extends Cubit<AppsState> {
       includeSystemApps: true,
       onlyAppsWithLaunchIntent: true,
     ).then((value) {
-      value = value
-          .where((element) => element.packageName != 'my.mdu1.launcher')
-          .toList();
-
       emit(
         state.copyWith(
           applications: value,
@@ -25,7 +21,7 @@ class AppsCubit extends Cubit<AppsState> {
   }
 
   void handleKeyUp() {
-    var newIndex = (state.selectedIndex ?? 0) - 5;
+    var newIndex = (state.selectedIndex ?? 0) - 7;
 
     if (newIndex < 0) newIndex = 0;
 
@@ -35,7 +31,7 @@ class AppsCubit extends Cubit<AppsState> {
   void handleKeyDown() {
     if (state.applications == null) return;
 
-    var newIndex = (state.selectedIndex ?? 0) + 5;
+    var newIndex = (state.selectedIndex ?? 0) + 7;
 
     if (newIndex > (state.applications!.length - 1)) {
       newIndex = state.applications!.length - 1;
