@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:http/http.dart' as http;
 import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -32,6 +33,8 @@ class MyApp extends StatelessWidget {
         create: (context) => AppsCubit(),
         child: const LauncherScreen(),
       ),
+      navigatorObservers: [FlutterSmartDialog.observer],
+      builder: FlutterSmartDialog.init(),
     );
   }
 }
@@ -48,6 +51,7 @@ class _LauncherScreenState extends State<LauncherScreen>
   DateTime? lastCheckExpiration;
   AppLifecycleState? _notification;
   late AutoScrollController controller;
+  bool isFirstTimeBooting = true;
 
   @override
   void initState() {
@@ -58,8 +62,10 @@ class _LauncherScreenState extends State<LauncherScreen>
           Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
       axis: Axis.vertical,
     );
-    fetchOtaUpdate();
-    DeviceApps.openApp('tv.mdu1.iptv');
+    fetchOtaUpdate().then((_) {
+      DeviceApps.openApp('tv.mdu1.iptv');
+      isFirstTimeBooting = false;
+    });
   }
 
   Future<void> fetchOtaUpdate() async {
@@ -84,21 +90,61 @@ class _LauncherScreenState extends State<LauncherScreen>
       );
 
       if (resp.statusCode != 200) {
+        if (!isFirstTimeBooting) return;
+
+        if (resp.statusCode == 401) {
+          await SmartDialog.showToast(
+            'Minimum app version is greater than your current app version.',
+            time: const Duration(seconds: 5),
+          );
+        } else {
+          if (resp.statusCode == 404) {
+            await SmartDialog.showToast(
+              'Your launcher is up to date. (v.${packageInfoPlugin.version})',
+              time: const Duration(seconds: 5),
+            );
+          }
+        }
         return;
       }
 
-      OtaUpdate().execute(
-        resp.body,
+      SmartDialog.showToast(
+        'Downloading new update for launcher...',
       );
+
+      OtaUpdate()
+          .execute(
+        resp.body,
+      )
+          .listen((event) {
+        switch (event.status) {
+          case OtaStatus.INSTALLING:
+            SmartDialog.showToast(
+              'Installing new update for launcher...',
+            );
+            break;
+          case OtaStatus.ALREADY_RUNNING_ERROR:
+          case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+          case OtaStatus.INTERNAL_ERROR:
+          case OtaStatus.DOWNLOAD_ERROR:
+          case OtaStatus.CHECKSUM_ERROR:
+            SmartDialog.showToast(
+              'There was a problem updating your launcher.',
+            );
+            break;
+        }
+      });
+
+      return;
     } catch (e, st) {
       log(
         e.toString(),
         error: st,
       );
-      // await SmartDialog.showToast(
-      //   'There was a problem fetching new updates.',
-      //   time: const Duration(seconds: 5),
-      // );
+      await SmartDialog.showToast(
+        'There was a problem fetching new updates.',
+        time: const Duration(seconds: 5),
+      );
     }
   }
 
@@ -111,9 +157,7 @@ class _LauncherScreenState extends State<LauncherScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_notification?.name == 'paused' &&
-        state.name == 'resumed' &&
-        DateTime.now().isAfter(lastCheckExpiration!)) {
+    if (_notification?.name == 'paused' && state.name == 'resumed') {
       fetchOtaUpdate();
     }
 
@@ -191,67 +235,63 @@ class _LauncherScreenState extends State<LauncherScreen>
                 },
                 builder: (context, state) {
                   if (state.applications != null) {
-                    return Padding(
+                    return GridView.builder(
                       padding: const EdgeInsets.all(48.0),
-                      child: GridView.builder(
-                        controller: controller,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                        ),
-                        itemCount: state.applications!.length,
-                        itemBuilder: (context, index) {
-                          final app = state.applications![index];
-                          return GestureDetector(
-                            onTap: () {
-                              DeviceApps.openApp(app.packageName);
-                            },
-                            child: AutoScrollTag(
-                              key: ValueKey(index),
-                              controller: controller,
-                              index: index,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: index == state.selectedIndex
-                                      ? Colors.black.withOpacity(0.85)
-                                      : null,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: index == state.selectedIndex
-                                      ? Border.all(
-                                          color: Colors.white, width: 1)
-                                      : null,
-                                ),
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    app is ApplicationWithIcon
-                                        ? Expanded(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(6.0),
-                                              child: Image.memory(
-                                                app.icon,
-                                              ),
+                      controller: controller,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                      ),
+                      itemCount: state.applications!.length,
+                      itemBuilder: (context, index) {
+                        final app = state.applications![index];
+                        return GestureDetector(
+                          onTap: () {
+                            DeviceApps.openApp(app.packageName);
+                          },
+                          child: AutoScrollTag(
+                            key: ValueKey(index),
+                            controller: controller,
+                            index: index,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: index == state.selectedIndex
+                                    ? Colors.black.withOpacity(0.85)
+                                    : null,
+                                borderRadius: BorderRadius.circular(16),
+                                border: index == state.selectedIndex
+                                    ? Border.all(color: Colors.white, width: 1)
+                                    : null,
+                              ),
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  app is ApplicationWithIcon
+                                      ? Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(6.0),
+                                            child: Image.memory(
+                                              app.icon,
                                             ),
-                                          )
-                                        : const SizedBox.shrink(),
-                                    Text(
-                                      app.appName,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(),
+                                  Text(
+                                    app.appName,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     );
                   }
 

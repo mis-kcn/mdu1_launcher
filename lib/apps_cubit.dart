@@ -11,6 +11,7 @@ class AppsCubit extends Cubit<AppsState> {
       includeSystemApps: true,
       onlyAppsWithLaunchIntent: true,
     ).then((value) {
+      value.sort((a, b) => a.appName.compareTo(b.appName));
       emit(
         state.copyWith(
           applications: value,
@@ -22,6 +23,10 @@ class AppsCubit extends Cubit<AppsState> {
 
   void handleKeyUp() {
     var newIndex = (state.selectedIndex ?? 0) - 7;
+
+    if ((state.selectedIndex ?? 0) <= 6) {
+      newIndex = (state.selectedIndex ?? 0) - 1;
+    }
 
     if (newIndex < 0) newIndex = 0;
 
