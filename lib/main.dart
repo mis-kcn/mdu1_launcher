@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,19 +56,23 @@ class _LauncherScreenState extends State<LauncherScreen>
   late AutoScrollController controller;
   bool isFirstTimeBooting = true;
 
+  final Connectivity _connectivity = Connectivity();
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     controller = AutoScrollController(
       viewportBoundaryGetter: () =>
           Rect.fromLTRB(0, 0, 0, MediaQuery.of(context).padding.bottom),
       axis: Axis.vertical,
     );
-    fetchOtaUpdate().then((_) {
-      DeviceApps.openApp('tv.mdu1.iptv');
-      isFirstTimeBooting = false;
-    });
+
+    initConnectivity();
+
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
   }
 
   Future<void> fetchOtaUpdate() async {
@@ -132,6 +139,8 @@ class _LauncherScreenState extends State<LauncherScreen>
               'There was a problem updating your launcher.',
             );
             break;
+          case OtaStatus.DOWNLOADING:
+            break;
         }
       });
 
@@ -150,9 +159,38 @@ class _LauncherScreenState extends State<LauncherScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance?.removeObserver(this);
-
+    WidgetsBinding.instance.removeObserver(this);
+    _connectivitySubscription.cancel();
     super.dispose();
+  }
+
+  Future<void> initConnectivity() async {
+    late ConnectivityResult result;
+
+    try {
+      result = await _connectivity.checkConnectivity();
+    } on PlatformException {
+      return;
+    }
+
+    if (!mounted) {
+      return Future.value(null);
+    }
+
+    return _updateConnectionStatus(result);
+  }
+
+  Future<void> _updateConnectionStatus(ConnectivityResult result) async {
+    setState(() {
+      if (result != ConnectivityResult.none) {
+        fetchOtaUpdate().then((_) {
+          LaunchApp.openApp(
+            androidPackageName: 'tv.mdu1.iptv',
+          );
+          isFirstTimeBooting = false;
+        });
+      }
+    });
   }
 
   @override
@@ -203,7 +241,9 @@ class _LauncherScreenState extends State<LauncherScreen>
       },
       child: WillPopScope(
         onWillPop: () async {
-          DeviceApps.openApp('tv.mdu1.iptv');
+          await LaunchApp.openApp(
+            androidPackageName: 'tv.mdu1.iptv',
+          );
 
           return false;
         },
