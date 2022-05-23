@@ -183,7 +183,10 @@ class _LauncherScreenState extends State<LauncherScreen>
   Future<void> _updateConnectionStatus(ConnectivityResult result) async {
     setState(() {
       if (result != ConnectivityResult.none) {
-        fetchOtaUpdate().then((_) {
+        fetchOtaUpdate().then((_) async {
+          await LaunchApp.openApp(
+            androidPackageName: 'tv.mdu1.iptv',
+          );
           isFirstTimeBooting = false;
         });
       }
