@@ -69,10 +69,17 @@ class _LauncherScreenState extends State<LauncherScreen>
       axis: Axis.vertical,
     );
 
+    openIptv();
     initConnectivity();
 
     _connectivitySubscription =
         _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+  }
+
+  Future<void> openIptv() async {
+    await LaunchApp.openApp(
+      androidPackageName: 'tv.mdu1.iptv',
+    );
   }
 
   Future<void> fetchOtaUpdate() async {
@@ -184,9 +191,9 @@ class _LauncherScreenState extends State<LauncherScreen>
     setState(() {
       if (result != ConnectivityResult.none) {
         fetchOtaUpdate().then((_) async {
-          await LaunchApp.openApp(
-            androidPackageName: 'tv.mdu1.iptv',
-          );
+          // await LaunchApp.openApp(
+          //   androidPackageName: 'tv.mdu1.iptv',
+          // );
           isFirstTimeBooting = false;
         });
       }
