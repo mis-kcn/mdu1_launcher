@@ -51,7 +51,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <receiver
+        <!-- <receiver
             android:enabled="true"
             android:exported="true"
             android:name="com.example.mdu1_launcher.BootReceiver"
@@ -61,6 +61,6 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </receiver>
+        </receiver> -->
     </application>
 </manifest>
