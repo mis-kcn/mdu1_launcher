@@ -11,6 +11,7 @@ class AppsCubit extends Cubit<AppsState> {
       includeSystemApps: true,
       onlyAppsWithLaunchIntent: true,
     ).then((value) {
+      value.removeWhere((element) => element.packageName == 'my.mdu1.launcher');
       value.sort((a, b) => a.appName.compareTo(b.appName));
       emit(
         state.copyWith(

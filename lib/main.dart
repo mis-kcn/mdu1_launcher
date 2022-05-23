@@ -184,9 +184,6 @@ class _LauncherScreenState extends State<LauncherScreen>
     setState(() {
       if (result != ConnectivityResult.none) {
         fetchOtaUpdate().then((_) {
-          LaunchApp.openApp(
-            androidPackageName: 'tv.mdu1.iptv',
-          );
           isFirstTimeBooting = false;
         });
       }
