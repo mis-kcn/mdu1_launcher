@@ -281,7 +281,7 @@ class _LauncherScreenState extends State<LauncherScreen>
                   );
                 },
                 builder: (context, state) {
-                  if (state.applications != null) {
+                  if (state.applications != null && !isFirstTimeBooting) {
                     return GridView.builder(
                       padding: const EdgeInsets.all(48.0),
                       controller: controller,
