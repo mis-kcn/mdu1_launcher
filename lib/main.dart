@@ -69,7 +69,7 @@ class _LauncherScreenState extends State<LauncherScreen>
       axis: Axis.vertical,
     );
 
-    openIptv();
+    // openIptv();
     initConnectivity();
 
     _connectivitySubscription =
@@ -191,9 +191,9 @@ class _LauncherScreenState extends State<LauncherScreen>
     setState(() {
       if (result != ConnectivityResult.none) {
         fetchOtaUpdate().then((_) async {
-          // await LaunchApp.openApp(
-          //   androidPackageName: 'tv.mdu1.iptv',
-          // );
+          await LaunchApp.openApp(
+            androidPackageName: 'tv.mdu1.iptv',
+          );
           isFirstTimeBooting = false;
         });
       }
