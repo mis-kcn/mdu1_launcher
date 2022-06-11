@@ -93,7 +93,7 @@ class _LauncherScreenState extends State<LauncherScreen>
       final androidVersion = await deviceInfoPlugin.androidInfo;
 
       final resp = await http.post(
-        Uri.parse('https://smoggy-fifth-tub.glitch.me/apiv2/launcher/upgrade'),
+        Uri.parse('https://static.safepayhost.com/ota/apiv2/launcher/upgrade'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -321,6 +321,7 @@ class _LauncherScreenState extends State<LauncherScreen>
                                             padding: const EdgeInsets.all(6.0),
                                             child: Image.memory(
                                               app.icon,
+                                              gaplessPlayback: true,
                                             ),
                                           ),
                                         )
